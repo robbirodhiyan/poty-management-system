@@ -19,12 +19,9 @@ class Credit extends Model
   {
     return $this->belongsTo(Source::class);
   }
-
-  public function getFile(){
-    if($this->file && Storage::disk('s3')->exists($this->file)){
-      return Storage::disk('s3')->url($this->file);
-    }else{
-      return null;
-    }
+  public function creditLog()
+  {
+    return $this->hasMany(CreditLog::class, 'credit', 'id');
   }
+
 }

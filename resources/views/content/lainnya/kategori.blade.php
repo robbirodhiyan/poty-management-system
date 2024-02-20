@@ -7,12 +7,6 @@
         <span class="text-muted fw-light">Lainnya /</span> Kategori
         <ul class="list-inline mb-0 float-end">
             <li class="list-inline-item">
-                <a href="#" class="btn btn-outline-primary">
-                    <i class="bi bi-download me-1"></i> Arsip
-                </a>
-            </li>
-            <li class="list-inline-item">|</li>
-            <li class="list-inline-item">
                 <a href="{{ route('InputKategori') }}" class="btn btn-primary">
                     <i class="bi bi-plus-circle me-1"></i> Input Data
                 </a>
@@ -21,10 +15,10 @@
     </h4>
 
     <!-- Basic Bootstrap Table -->
-    <div class="card">
+    <div class="card p-4">
         {{-- <h5 class="card-header">Table Basic</h5> --}}
         <div class="table-responsive text-nowrap">
-            <table class="table">
+            <table class="table" id="datatables">
                 <thead>
                     <tr>
                         <th>No</th>
@@ -32,9 +26,9 @@
                     </tr>
                 </thead>
                 <tbody class="table-border-bottom-0">
-                    @foreach ($categories as $category)
+                    @foreach ($categories as $key => $category)
                         <tr>
-                            <td>{{ $category->id }}</td>
+                            <td>{{ $key + 1 }}</td>
                             <td>{{ $category->name }}</td>
                         </tr>
                     @endforeach
@@ -46,4 +40,14 @@
     </div>
     <!--/ Basic Bootstrap Table -->
 
+@endsection
+
+@section('page-script')
+    <script>
+        $(document).ready(function () {
+          responsive: true,
+            // Inisialisasi DataTables
+            $('#datatables').DataTable();
+        });
+    </script>
 @endsection

@@ -18,11 +18,12 @@ class UserSeeder extends Seeder
     public function run()
     {
         User::factory()->create([
-            'name' => 'Isbakhul Lailatil',
-            'email' => 'isbakhul@gmail.com',
+            'name' => 'Robbi Rodhiyan',
+            'email' => 'robbirodhiyan@gmail.com',
             'email_verified_at' => now(),
             'password' => Hash::make('12345678'), // You can change 'password' to the desired password
             'remember_token' => Str::random(10),
+            'role' => 'owner', // Set the desired role, e.g., 'owner'
         ]);
     }
 }

@@ -4,12 +4,21 @@
 
 @section('content')
     <h4 class="fw-bold py-3 mb-4">
-        <span class="text-muted fw-light">transaction /</span> Pengeluaran
+        <span class="text-muted fw-light">Transaction /</span> Pengeluaran
         <ul class="list-inline mb-0 float-end">
-            <li class="list-inline-item">
-                <a href="#" class="btn btn-outline-primary">
-                    <i class="bi bi-download me-1"></i> To Excel
-                </a>
+            <li class="dropdown d-inline-block ">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" id="exportDropdown"
+                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Export
+                </button>
+                <div class="dropdown-menu" aria-labelledby="exportDropdown">
+                    <a class="dropdown-item" href="{{ route('generate-pdf-credit', ['selectedMonth' => 'all']) }}">All Data</a>
+                    @foreach ($availableMonths as $month)
+                        <a class="dropdown-item" href="{{ route('generate-pdf-credit', ['selectedMonth' => $month]) }}">
+                            {{ \Carbon\Carbon::parse($month)->format('F Y') }}
+                        </a>
+                    @endforeach
+                </div>
             </li>
             <li class="list-inline-item">|</li>
             <li class="list-inline-item">
@@ -56,6 +65,12 @@
                                 @endif
                             </td>
                             <td>
+                              @if (auth()->user()->hasRole('owner'))
+                                    <button type="button" class="btn btn-danger delete-production"
+                                    data-id="{{ $credit->id }}" data-name="{{ $credit->name }}">
+                                    <i class="bx bx-trash me-1"></i> Delete
+                                </button>
+                                @endif
                                 <button class="btn btn-primary" onclick="window.location.href='{{ route('editpengeluaran', ['credit' => $credit->id]) }}'">
                                     <i class="bx bx-edit-alt me-1"></i> Edit
                                 </button>
@@ -151,12 +166,57 @@
                     }
                     html += `</tr>`;
                 }
-
                 html += `</tbody></table></div>`;
                 $('.modal-body').html(html);
                 $('#debitLog').modal('show');
             }
         });
     });
+    $(document).on('click', '.delete-production', function() {
+            var productId = $(this).data('id');
+            var productName = $(this).data('name');
+
+            Swal.fire({
+                title: 'Apakah Anda yakin?',
+                text: 'Data ' + productName + ' akan dihapus!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Jika pengguna mengkonfirmasi, kirimkan permintaan DELETE ke rute deleteproduct
+                    $.ajax({
+                        type: "DELETE",
+                        url: "{{ url('/deletepengeluaran') }}" + '/' + productId,
+                        data: {
+                            "_token": "{{ csrf_token() }}"
+                        },
+                        success: function(data) {
+                            // Tampilkan Sweet Alert sukses
+                            Swal.fire(
+                                'Berhasil!',
+                                'Data ' + productName + ' telah dihapus.',
+                                'success'
+                            ).then((result) => {
+                                // Muat ulang halaman setelah menghapus
+                                location.reload();
+                            });
+                        },
+                        error: function(data) {
+                            // Tampilkan Sweet Alert gagal
+                            Swal.fire(
+                                'Gagal!',
+                                'Terjadi kesalahan saat menghapus Data.',
+                                'error'
+                            );
+                        }
+                    });
+                }
+            });
+        });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 @endpush

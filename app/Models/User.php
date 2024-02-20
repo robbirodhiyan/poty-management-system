@@ -22,6 +22,7 @@ class User extends Authenticatable  implements JWTSubject
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -57,4 +58,9 @@ class User extends Authenticatable  implements JWTSubject
     {
         return [];
     }
+
+    public function hasRole($role)
+{
+    return $this->role === $role;
+}
 }

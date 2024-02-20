@@ -1,11 +1,27 @@
 @extends('layouts/contentNavbarLayout')
 
-@section('title', 'Pemasukan')
+@section('title', 'Summary')
 
 @section('content')
 
     <h4 class="fw-bold py-3 mb-4">
-        <span class="text-muted fw-light">transaction /</span> Summary
+        <span class="text-muted fw-light">Transaction /</span> Summary
+        <ul class="list-inline mb-0 float-end">
+            <li class="dropdown d-inline-block ">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" id="exportDropdown"
+                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Export
+                </button>
+                <div class="dropdown-menu" aria-labelledby="exportDropdown">
+                    <a class="dropdown-item" href="{{ route('generate-pdf-summary', ['selectedMonth' => 'all']) }}">All Data</a>
+                    @foreach ($availableMonths as $month)
+                        <a class="dropdown-item" href="{{ route('generate-pdf-summary', ['selectedMonth' => $month]) }}">
+                            {{ \Carbon\Carbon::parse($month)->format('F Y') }}
+                        </a>
+                    @endforeach
+                </div>
+            </li>
+        </ul>
     </h4>
 
 

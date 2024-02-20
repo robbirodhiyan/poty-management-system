@@ -8,11 +8,11 @@
 
 @section('content')
     <h4 class="fw-bold py-3 mb-4">
-        <span class="text-muted fw-light">Edit /</span> Debit
+        <span class="text-muted fw-light">Edit /</span> Credit
     </h4>
     <div>
         <div class="card mb-4">
-            <h5 class="card-header">Edit Pemasukan</h5>
+            <h5 class="card-header">Edit Pengeluaran</h5>
             <div class="card-body">
                 <form action="{{ route('updatecredit', ['credit' => $credit->id]) }}" method="POST">
                     @csrf

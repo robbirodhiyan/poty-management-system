@@ -29,11 +29,12 @@ Route::get('/auth', function () {
   return view('content.authentications.auth-login-basic'); // You can replace 'auth.login' with the actual view name for your login page
 })->name('auth')->middleware('guest');
 
-
-
-Route::middleware(['auth'])->group(function () {
-  // Dashboard Route
+Route::middleware(['auth', 'role:owner'])->group(function () {
   $controller_path = 'App\Http\Controllers';
+  Route::get('/notes', $controller_path . '\dashboard\Analytics@createNote')->name('createNote');
+  Route::get('/notes/edit/{id}', $controller_path . '\dashboard\Analytics@editNote')->name('editNote');
+  Route::put('/notes/update/{id}', $controller_path . '\dashboard\Analytics@updateNote')->name('updateNote');
+  Route::delete('/notes/delete/{id}', $controller_path . '\dashboard\Analytics@deleteNote')->name('deleteNote');
   Route::get('/dashboard', $controller_path . '\dashboard\Analytics@index')->name('dashboard');
   Route::post('/dashboard/notes', $controller_path . '\dashboard\Analytics@storeNote')->name('dashboard.storeNote');
   Route::get('/notes', $controller_path . '\dashboard\Analytics@createNote')->name('createNote');
@@ -49,10 +50,79 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/transaction/pemasukan/edit/{debit}', $controller_path . '\transaction\pemasukan@edit')->name('editpemasukan');
   Route::post('transaction/pemasukan/edit/update', $controller_path . '\transaction\pemasukan@update')->name('updatedebit');
   Route::put('transaction/pemasukan/edit/update/{debit}', $controller_path . '\transaction\pemasukan@update')->name('updatedebit');
+  Route::delete('/deletepemasukan/{debit}', $controller_path . '\transaction\pemasukan@delete')->name('deletepemasukan');
+
 
   Route::get('/transaction/pengeluaran', $controller_path . '\transaction\pengeluaran@index')->name('pengeluaran');
   Route::get('transaction/pengeluaran/input', $controller_path . '\transaction\pengeluaran@create')->name('InputCredit');
   Route::post('transaction/pengeluaran/input/store', $controller_path . '\transaction\pengeluaran@store')->name('storecredit');
+
+  Route::get('/transaction/pengeluaran/edit/{credit}', $controller_path . '\transaction\pengeluaran@edit')->name('editpengeluaran');
+  Route::post('transaction/pengeluaran/edit/update', $controller_path . '\transaction\pengeluaran@update')->name('updatecredit');
+  Route::put('transaction/pengeluaran/edit/update/{credit}', $controller_path . '\transaction\pengeluaran@update')->name('updatecredit');
+  Route::delete('/deletepengeluaran/{credit}', $controller_path . '\transaction\pengeluaran@delete')->name('deletepengeluaran');
+
+
+  //produk
+  Route::get('/product', $controller_path . '\products\ProductController@index')->name('product');
+  Route::get('/product/input', $controller_path . '\products\ProductController@create')->name('inputproduct');
+  Route::post('/product/input/store', $controller_path . '\products\ProductController@store')->name('storeproduct');
+  Route::get('/product/edit/{product}', $controller_path . '\products\ProductController@edit')->name('editproduct');
+  Route::put('/product/edit/update/{product}', $controller_path . '\products\ProductController@update')->name('updateproduct');
+  Route::delete('/deleteproduct/{product}', $controller_path . '\products\ProductController@delete')->name('deleteproduct');
+  Route::delete('/product/delete/{id}', 'products\ProductController@destroy')->name('product.destroy');
+  Route::post('/get-produksi', 'ProductController@getProduksi')->name('get-produksi');
+  Route::get('product/generate-pdf', $controller_path . '\products\ProductController@generatePDF')->name('generate-pdf-product');
+  Route::post('/update-stok', $controller_path . '\transaction\pemasukan@updateStok')->name('updateStok');
+
+  //produksi
+  Route::get('/production', $controller_path . '\productions\ProductionController@index')->name('production');
+  Route::get('/production/input/{name_product?}', $controller_path . '\productions\ProductionController@create')->name('inputproduction');
+  Route::get('/create-production/{name}', $controller_path . '\productions\ProductionController@create')->name('create-production-with-product');
+  Route::post('/production/input/store', $controller_path . '\productions\ProductionController@store')->name('storeproduction');
+  Route::get('/production/edit/{production}', $controller_path . '\productions\ProductionController@edit')->name('editproduction');
+  Route::put('/production/edit/update/{production}', $controller_path . '\productions\ProductionController@update')->name('updateproduction');
+  Route::delete('/deleteproduction/{production}', $controller_path . '\productions\ProductionController@delete')->name('deleteproduction');
+  Route::get('production/generate-pdf', $controller_path . '\productions\ProductionController@generatePDF')->name('generate-pdf');
+
+  //Lainnya
+  Route::get('/lainnya/kategori', $controller_path . '\lainnya\kategori@index')->name('kategori');
+  Route::get('/lainnya/kategori/input', $controller_path . '\lainnya\kategori@create')->name('InputKategori');
+  Route::post('lainnya/kategori/input/store', $controller_path . '\lainnya\kategori@store')->name('storekategori');
+
+  Route::get('/lainnya/sumber', $controller_path . '\lainnya\sumber@index')->name('sumber');
+  Route::get('/lainnya/sumber/input', $controller_path . '\lainnya\sumber@create')->name('InputSumber');
+  Route::post('lainnya/sumber/input/store', $controller_path . '\lainnya\sumber@store')->name('storesumber');
+
+  Route::resource('calendar-notes', 'CalendarNoteController');
+  Route::get('/getProductData', $controller_path . '\products\ProductController@getProductData')->name('getProductData');
+});
+
+Route::middleware(['auth', 'role:admin'])->group(function () {
+  // Dashboard Route
+  $controller_path = 'App\Http\Controllers';
+  Route::get('/dashboard', $controller_path . '\dashboard\Analytics@index')->name('dashboard');
+  Route::post('/dashboard/notes', $controller_path . '\dashboard\Analytics@storeNote')->name('dashboard.storeNote');
+  Route::get('/notes', $controller_path . '\dashboard\Analytics@createNote')->name('createNote');
+
+  //transaction
+  Route::get('/transaction/summary', $controller_path . '\transaction\summary@index')->name('summary');
+  Route::get('transaction/summary/generate-pdf', $controller_path . '\transaction\summary@generatePDF')->name('generate-pdf-summary');
+  Route::get('/transactions/datatables', [summary::class, 'index'])->name('transactions.datatables');
+  Route::get('/transaction/pemasukan', $controller_path . '\transaction\pemasukan@index')->name('pemasukan');
+  Route::post('/transaction/pemasukan', $controller_path . '\transaction\pemasukan@index')->name('pemasukan.store');
+  Route::get('transaction/pemasukan/input', $controller_path . '\transaction\pemasukan@create')->name('InputDebit');
+  Route::post('transaction/pemasukan/input/store', $controller_path . '\transaction\pemasukan@store')->name('storedebit');
+  Route::get('transaction/pemasukan/generate-pdf', $controller_path . '\transaction\pemasukan@generatePDF')->name('generate-pdf-debit');
+
+  Route::get('/transaction/pemasukan/edit/{debit}', $controller_path . '\transaction\pemasukan@edit')->name('editpemasukan');
+  Route::post('transaction/pemasukan/edit/update', $controller_path . '\transaction\pemasukan@update')->name('updatedebit');
+  Route::put('transaction/pemasukan/edit/update/{debit}', $controller_path . '\transaction\pemasukan@update')->name('updatedebit');
+
+  Route::get('/transaction/pengeluaran', $controller_path . '\transaction\pengeluaran@index')->name('pengeluaran');
+  Route::get('transaction/pengeluaran/input', $controller_path . '\transaction\pengeluaran@create')->name('InputCredit');
+  Route::post('transaction/pengeluaran/input/store', $controller_path . '\transaction\pengeluaran@store')->name('storecredit');
+  Route::get('transaction/pengeluaran/generate-pdf', $controller_path . '\transaction\pengeluaran@generatePDF')->name('generate-pdf-credit');
 
   Route::get('/transaction/pengeluaran/edit/{credit}', $controller_path . '\transaction\pengeluaran@edit')->name('editpengeluaran');
   Route::post('transaction/pengeluaran/edit/update', $controller_path . '\transaction\pengeluaran@update')->name('updatecredit');
@@ -78,7 +148,7 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/production/edit/{production}', $controller_path . '\productions\ProductionController@edit')->name('editproduction');
   Route::put('/production/edit/update/{production}', $controller_path . '\productions\ProductionController@update')->name('updateproduction');
   Route::delete('/deleteproduction/{production}', $controller_path . '\productions\ProductionController@delete')->name('deleteproduction');
-Route::get('production/generate-pdf', $controller_path . '\productions\ProductionController@generatePDF')->name('generate-pdf');
+  Route::get('production/generate-pdf', $controller_path . '\productions\ProductionController@generatePDF')->name('generate-pdf');
 
   //Lainnya
   Route::get('/lainnya/kategori', $controller_path . '\lainnya\kategori@index')->name('kategori');
@@ -91,19 +161,12 @@ Route::get('production/generate-pdf', $controller_path . '\productions\Productio
 
   Route::resource('calendar-notes', 'CalendarNoteController');
   Route::get('/getProductData', $controller_path . '\products\ProductController@getProductData')->name('getProductData');
-
-  // Route::get('/tes', [pemasukan::class,'listS3Files']);
-  Route::get('/employee/archived', [EmployeController::class, 'archived'])->name('employee.archived');
-  Route::post('/employee/unarchived/{nip}', [EmployeController::class, 'unarchived'])->name('employee.unarchived');
-  Route::resource('/employee', EmployeController::class);
-
-  Route::resource('/positions', PositionController::class);
-
-  Route::resource('/payroll/compensations', CompensationController::class);
 });
 
 // Main Page Route
+
 Route::get('/', $controller_path . '\dashboard\Analytics@index')->name('dashboard-analytics')->middleware('auth');
+
 
 
 

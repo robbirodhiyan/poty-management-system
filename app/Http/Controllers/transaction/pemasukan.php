@@ -13,15 +13,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 
 class pemasukan extends Controller
 {
   public function index()
   {
-    // $debits = Debit::all();
-
-    // debit = Debit join debitlog ambil data debitlog yang terbaru
     $debits = Debit::select(['debits.*', 'debitlog.source', 'debitlog.category'])
       ->selectSub(function ($query) {
         $query->selectRaw('COUNT(*) > 1')
@@ -33,15 +31,20 @@ class pemasukan extends Controller
           ->whereRaw('debitlog.id = (select max(id) from debitlog where debitlog.debit = debits.id)');
       })
       ->get();
-
+    $availableMonths = Debit::distinct()
+      ->selectRaw('YEAR(date) as year, MONTH(date) as month')
+      ->pluck('year', 'month')
+      ->map(function ($year, $month) {
+        return \Carbon\Carbon::create($year, $month, 1)->format('Y-m');
+      });
 
     return view('content.transaction.pemasukan', [
-      'debits' => $debits
+      'debits' => $debits,
+      'availableMonths' => $availableMonths,
     ]);
   }
   public function create()
   {
-    // ELOQUENT
     $categories = Category::all();
     $sources = Source::all();
     return view('content.form.form-input-pemasukan', compact('categories', 'sources'));
@@ -69,7 +72,6 @@ class pemasukan extends Controller
 
     // Simpan data pemasukan
     try {
-      // Use a transaction to ensure atomicity
       DB::beginTransaction();
 
       // Save Debit data
@@ -88,33 +90,27 @@ class pemasukan extends Controller
       $log->category = $request->category;
       $log->save();
 
-      // Update stok produk
-      $productName = $request->input('name');
-      $quantity = $request->input('jumlah_item');
+      // Update stok produk (hanya jika tidak input manual)
+      if ($request->input('scanOption') !== 'manualInput') {
+        $productName = $request->input('name');
+        $quantity = $request->input('jumlah_item');
 
-      $product = Product::where('name_product', $productName)->first();
+        $product = Product::where('name_product', $productName)->first();
 
-      if ($product) {
-        // Kurangkan stok
-        $product->stok -= $quantity;
-        $product->save();
-
-        // Commit the transaction
-        DB::commit();
-
-        // Berhasil, berikan respons atau lakukan yang lain
-        return redirect()->route('pemasukan')->with('success', 'Pemasukan berhasil disimpan dan stok berhasil diperbarui');
-      } else {
-        // Produk tidak ditemukan
-        return redirect()->route('pemasukan')->with('error', 'Produk tidak ditemukan');
+        if ($product) {
+          $product->stok -= $quantity;
+          $product->save();
+        } else {
+          return redirect()->route('pemasukan')->with('error', 'Produk tidak ditemukan');
+        }
       }
+
+      DB::commit();
+
+      return redirect()->route('pemasukan')->with('success', 'Pemasukan berhasil disimpan');
     } catch (\Exception $e) {
-      // An error occurred, rollback the transaction
       DB::rollBack();
 
-
-
-      // Handle the error as needed
       return redirect()->route('pemasukan')->with('error', 'Terjadi kesalahan. Silakan coba lagi.');
     }
   }
@@ -218,5 +214,59 @@ class pemasukan extends Controller
     } else {
       return response()->json(['success' => false, 'message' => 'Produk tidak ditemukan'], 404);
     }
+  }
+  public function delete(Debit $debit)
+  {
+    try {
+      // Gunakan transaksi untuk memastikan keberlanjutan operasi database
+      DB::beginTransaction();
+
+      // Hapus juga log yang terkait
+      $debit->debitLog()->delete();
+
+      // Hapus debit
+      $debit->delete();
+
+      // Commit transaksi
+      DB::commit();
+
+      return response()->json(['success' => 'Debit deleted successfully']);
+    } catch (\Exception $e) {
+      // Rollback transaksi jika terjadi kesalahan
+      DB::rollBack();
+
+      return response()->json(['error' => 'Failed to delete debit'], 500);
+    }
+  }
+  public function generatePDF(Request $request)
+  {
+     $debits = Debit::select(['debits.*', 'debitlog.source', 'debitlog.category'])
+      ->selectSub(function ($query) {
+        $query->selectRaw('COUNT(*) > 1')
+          ->from('debitlog')
+          ->whereRaw('debitlog.debit = debits.id');
+      }, 'status_update')
+      ->join('debitlog', function ($join) {
+        $join->on('debitlog.debit', '=', 'debits.id')
+          ->whereRaw('debitlog.id = (select max(id) from debitlog where debitlog.debit = debits.id)');
+      })
+      ->get();
+    $selectedMonth = $request->query('selectedMonth');
+    $pdfFileName = 'Laporan Pemasukan';
+
+    if ($selectedMonth && $selectedMonth !== 'all') {
+      // Menggunakan where untuk membandingkan tanggal secara langsung
+      $debits = Debit::where('date', 'like', $selectedMonth . '%')->get();
+      $pdfFileName .= '_' . \Carbon\Carbon::parse($selectedMonth)->format(' F Y');
+    } else {
+      $debits = Debit::all();
+    }
+    $selectedMonth = $request->query('selectedMonth');
+
+    $pdf = PDF::loadView('pdf.debit-pdf', compact('debits','selectedMonth'));
+
+    $pdfFileName .= '.pdf';
+
+    return $pdf->download($pdfFileName);
   }
 }

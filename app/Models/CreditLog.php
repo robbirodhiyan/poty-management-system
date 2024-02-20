@@ -11,4 +11,8 @@ class CreditLog extends Model
     protected $table = 'creditlog';
 
     protected $guarded = ['id'];
+    public function credit()
+    {
+        return $this->belongsTo(Credit::class);
+    }
 }

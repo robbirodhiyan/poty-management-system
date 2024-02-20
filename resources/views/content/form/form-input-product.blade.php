@@ -5,7 +5,16 @@
 @section('page-script')
     <script src="{{ asset('assets/js/form-basic-inputs.js') }}"></script>
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-
+<script>
+        $(document).ready(function () {
+            // Update stok based on the selected product
+            $('#name_product').on('change', function () {
+                var selectedProductId = $(this).val();
+                var selectedProductStok = $('#name_product option:selected').data('stok');
+                $('#stok').val(selectedProductStok);
+            });
+        });
+    </script>
 @endsection
 
 @section('content')
@@ -19,38 +28,30 @@
                 <form action="{{ route('storeproduct') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="form-floating mb-3">
-                        <select class="form-control" id="name_product" name="name_product"
-                            aria-describedby="floatingInputHelp">
-                            @foreach ($productions as $production)
-                                <option value="{{ $production->nama_product }}"
-                                    {{ old('name_product') == $production->nama_product ? 'selected' : '' }}>
-                                    {{ $production->kode_produksi . ' - ' . $production->nama_product }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('name_product')
-                            <span class="text-danger"> {{ $message }} </span>
-                        @enderror
-                        <label for="floatingInput">Nama Produk</label>
-                    </div>
+            <select class="form-control" id="name_product" name="name_product" aria-describedby="floatingInputHelp">
+                @foreach ($productions as $production)
+                    <option value="{{ $production->nama_product }}" data-stok="{{ $production->jumlah_produksi }}"
+                        {{ old('name_product') == $production->nama_product ? 'selected' : '' }}>
+                        {{ $production->kode_produksi . ' - ' . $production->nama_product }}
+                    </option>
+                @endforeach
+            </select>
+            @error('name_product')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+            <label for="name_product">Nama Produk</label>
+        </div>
                     <div class="form-floating mb-3">
-                        <select class="form-control" id="stok" name="stok" aria-describedby="floatingInputHelp">
-                            @foreach ($productions as $production)
-                                <option value="{{ $production->jumlah_produksi }}"
-                                    {{ old('production') == $production->id ? 'selected' : '' }}>
-                                    {{ $production->jumlah_produksi }}
-                                </option>
-                            @endforeach
-                        </select>
+                        <input type="text" class="form-control" id="stok" name="stok" value="{{ old('stok') }}"
+                            placeholder="Stok Masuk" aria-describedby="floatingInputHelp" readonly />
                         @error('stok')
                             <span class="text-danger"> {{ $message }} </span>
                         @enderror
                         <label for="floatingInput">Stok Masuk</label>
                     </div>
                     <div class="form-floating mb-3">
-                        <input type="text" class="form-control" id="harga_jual" name="harga_jual"
-                            value="{{ old('harga_jual') }}" placeholder="Rp. xxx.xxx"
-                            aria-describedby="floatingInputHelp" />
+                        <input type="text" class="form-control" id="harga_jual" name="harga_jual" value="{{ old('harga_jual') }}"
+                            placeholder="Rp. xxx.xxx" aria-describedby="floatingInputHelp" />
                         @error('harga_jual')
                             <span class="text-danger"> {{ $message }} </span>
                         @enderror

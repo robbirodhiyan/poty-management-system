@@ -69,13 +69,6 @@
                         @enderror
                     </div>
                     <div class="mb-3">
-                        <label for="file" class="form-label">File</label>
-                        <input class="form-control" type="file" id="file" name="file" accept="application/pdf">
-                        @error('file')
-                            <span class="text-danger"> {{ $message }} </span>
-                        @enderror
-                    </div>
-                    <div class="mb-3">
                         <label for="html5-date-input" class="col-md-2 col-form-label">Date</label>
                         <input class="form-control" type="date" value="{{old("date")}}" id="date" name="date" />
                         @error('date')

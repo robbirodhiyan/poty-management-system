@@ -1,6 +1,6 @@
 @extends('layouts/contentNavbarLayout')
 
-@section('title', 'Dashboard - Analytics')
+@section('title', 'Dashboard')
 
 @section('vendor-style')
     <link rel="stylesheet" href="{{ asset('assets/vendor/libs/apex-charts/apex-charts.css') }}">
@@ -12,14 +12,12 @@
     <script src="{{ asset('assets/vendor/libs/apex-charts/apexcharts.js') }}"></script>
     <style>
         .flatpickr-day.has-notes {
-            background-color: #ffcccb;
-            /* Ganti warna latar belakang sesuai kebutuhan Anda */
-            color: #000;
-            /* Ganti warna teks sesuai kebutuhan Anda */
-            border-radius: 50%;
-
-
-        }
+        background-color: #ffcccb;
+        /* Ganti warna latar belakang sesuai kebutuhan Anda */
+        color: #000;
+        /* Ganti warna teks sesuai kebutuhan Anda */
+        border-radius: 50%;
+    }
     </style>
 
 @endsection
@@ -28,48 +26,50 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.6/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.6/dist/flatpickr.min.js"></script>
 
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <script src="{{ asset('assets/js/dashboards-analytics.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            var allNotes = {!! collect($notes)->toJson() !!};
+    var allNotes = {!! collect($notes)->toJson() !!};
 
-            flatpickr('#openCalendar', {
-                mode: 'single',
-                dateFormat: 'Y-m-d',
-                defaultDate: 'today',
-                inline: true, // Menampilkan kalender secara tetap
-                onReady: function(selectedDates, dateStr, instance) {
-                    highlightCalendarDates(selectedDates, allNotes);
-                },
-                onChange: function(selectedDates, dateStr, instance) {
-                    highlightCalendarDates(selectedDates, allNotes);
+    flatpickr('#openCalendar', {
+        mode: 'single',
+        dateFormat: 'Y-m-d',
+        defaultDate: 'today',
+        inline: true, // Menampilkan kalender secara tetap
+        onReady: function(selectedDates, dateStr, instance) {
+            highlightCalendarDates(selectedDates, allNotes);
+        },
+        onChange: function(selectedDates, dateStr, instance) {
+            highlightCalendarDates(selectedDates, allNotes);
+        }
+    });
+
+    function highlightCalendarDates(selectedDates, notes) {
+      console.log('Selected Dates:', selectedDates);
+    console.log('All Notes:', notes);
+        // Menghapus tanda sebelumnya
+        document.querySelectorAll('.flatpickr-day').forEach(function(day) {
+            day.classList.remove('has-notes');
+        });
+
+        // Menandai tanggal dengan catatan
+        notes.forEach(function(note) {
+            var noteDate = new Date(note.date);
+            var dateString = noteDate.toISOString().split('T')[0];
+
+            if (selectedDates.includes(dateString)) {
+                // Menambahkan kelas untuk menandai tanggal dengan catatan
+                var calendarDay = document.querySelector(
+                    '.flatpickr-day[data-date="' + dateString + '"]'
+                );
+                if (calendarDay) {
+                    calendarDay.classList.add('has-notes');
                 }
-            });
-
-            function highlightCalendarDates(selectedDates, notes) {
-                // Menghapus tanda sebelumnya
-                document.querySelectorAll('.flatpickr-day').forEach(function(day) {
-                    day.classList.remove('has-notes');
-                });
-
-                // Menandai tanggal dengan catatan
-                notes.forEach(function(note) {
-                    var noteDate = new Date(note.date);
-                    var dateString = noteDate.toISOString().split('T')[0];
-
-                    if (selectedDates.includes(dateString)) {
-                        // Menambahkan kelas untuk menandai tanggal dengan catatan
-                        var calendarDay = document.querySelector(
-                            '.flatpickr-day[data-date="' + dateString + '"]'
-                        );
-                        if (calendarDay) {
-                            calendarDay.classList.add('has-notes');
-                        }
-                    }
-                });
             }
         });
+    }
+});
         document.addEventListener('DOMContentLoaded', function() {
             var modalTriggerButtons = document.querySelectorAll('[data-bs-toggle="modal"]');
             var transactionTypeInput = document.getElementById('transactionType');
@@ -81,7 +81,21 @@
                 });
             });
         });
+
+        document.addEventListener('DOMContentLoaded', function () {
+        // Cek apakah sweet alert harus ditampilkan
+        @if(session('swal'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: '{{ session('success') }}',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        @endif
+    });
     </script>
+
 @endsection
 
 @section('content')
@@ -135,7 +149,7 @@
                                 {{ number_format($transactions->whereInstanceOf('App\Models\Debit')->sum('total'), 0, ',', '.') }}
                             </h6>
                             @endif
-                            
+
                             {{-- <small class="text-success fw-semibold"><i class='bx bx-up-arrow-alt'></i> +28.42%</small> --}}
                         </div>
                     </div>
@@ -165,7 +179,7 @@
                                 {{ number_format($transactions->whereInstanceOf('App\Models\Credit')->sum('total'), 0, ',', '.') }}
                             </h6>
                             @endif
-                            
+
                             {{-- <small class="text-danger fw-semibold"><i class='bx bx-down-arrow-alt'></i> -14.82%</small> --}}
                         </div>
                     </div>
@@ -309,27 +323,41 @@
             </div>
         </div>
 
-        <div class="modal fade" id="allNotesModal" tabindex="-1" aria-labelledby="allNotesModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="allNotesModalLabel">All Notes</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body" id="allNotesContent">
-                        @forelse($notes as $note)
+         <div class="modal fade" id="allNotesModal" tabindex="-1" aria-labelledby="allNotesModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="allNotesModalLabel">All Notes</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="allNotesContent">
+                    @forelse($notes as $note)
+                        <div class="d-flex justify-content-between align-items-center mb-2">
                             <div>
                                 <h6 class="mb-0">{{ $note->text }}</h6>
                                 <small class="text-muted">Deadline: {{ $note->date }}</small>
                             </div>
-                            <hr>
-                        @empty
-                            <p>No notes available</p>
-                        @endforelse
-                    </div>
+                            @if (Auth::user() && Auth::user()->hasRole('owner'))
+                                <!-- Show Edit and Delete buttons for users with the 'owner' role -->
+                                <div class="ms-2">
+                                    <a href="{{ route('editNote', $note->id) }}" class="btn btn-sm btn-outline-primary">
+                                        Edit
+                                    </a>
+                                    <form action="{{ route('deleteNote', $note->id) }}" method="POST" style="display: inline-block;">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                                    </form>
+                                </div>
+                            @endif
+                        </div>
+                        <hr>
+                    @empty
+                        <p>No notes available</p>
+                    @endforelse
                 </div>
             </div>
         </div>
+    </div>
 
     @endsection

@@ -1,30 +1,25 @@
 @extends('layouts/contentNavbarLayout')
 
-@section('title', 'Produk')
+@section('title', 'Produksi')
 
 @section('content')
     <h4 class="fw-bold py-3 mb-4">
         <span class="text-muted fw-light"></span> Production
-        <ul class="list-inline-item">
-          <li class="dropdown d-inline-block ">
-            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="exportDropdown"
+        <ul class="list-inline mb-0 float-end">
+            <li class="dropdown d-inline-block ">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" id="exportDropdown"
                     data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                Export
-            </button>
-            <div class="dropdown-menu" aria-labelledby="exportDropdown">
-                <a class="dropdown-item" href="{{ route('generate-pdf', ['selectedMonth' => 'all']) }}">All Data</a>
-                @foreach($availableMonths as $month)
-                    <a class="dropdown-item" href="{{ route('generate-pdf', ['selectedMonth' => $month]) }}">
-                        {{ \Carbon\Carbon::parse($month)->format('F Y') }}
-                    </a>
-                @endforeach
-            </div>
-        </li>
-            {{-- <li class="list-inline-item">
-                <a href="{{ route('generate-pdf') }}" class="btn btn-outline-primary">
-                    <i class="bi bi-download me-1"></i> To PDF
-                </a>
-            </li> --}}
+                    Export
+                </button>
+                <div class="dropdown-menu" aria-labelledby="exportDropdown">
+                    <a class="dropdown-item" href="{{ route('generate-pdf', ['selectedMonth' => 'all']) }}">All Data</a>
+                    @foreach ($availableMonths as $month)
+                        <a class="dropdown-item" href="{{ route('generate-pdf', ['selectedMonth' => $month]) }}">
+                            {{ \Carbon\Carbon::parse($month)->format('F Y') }}
+                        </a>
+                    @endforeach
+                </div>
+            </li>
             <li class="list-inline-item">|</li>
             <li class="list-inline-item">
                 <a href="{{ route('inputproduction') }}" class="btn btn-primary">
@@ -63,8 +58,8 @@
                                     onclick="window.location='{{ route('editproduction', ['production' => $production->id]) }}'">
                                     <i class="bx bx-edit-alt me-1"></i> Edit
                                 </button>
-                                <button type="button" class="btn btn-danger delete-product" data-id="{{ $production->id }}"
-                                    data-name="{{ $production->nama_product }}">
+                                <button type="button" class="btn btn-danger delete-product"
+                                    data-id="{{ $production->id }}" data-name="{{ $production->nama_product }}">
                                     <i class="bx bx-trash me-1"></i> Delete
                                 </button>
                             </td>

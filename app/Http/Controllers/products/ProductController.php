@@ -48,7 +48,6 @@ class ProductController extends Controller
       $productionData = Production::find($product->production_id);
       $product->kode_produksi = $productionData->kode_produksi;
       $product->exp_date = $productionData->exp_date;
-      $product->hpp = $productionData->hpp;
     }
     foreach ($products as $product) {
       $product->days_until_expiry = $this->calculateDaysUntilExpiry($product->exp_date);
@@ -65,35 +64,34 @@ class ProductController extends Controller
 
 
   public function store(Request $request)
-  {
-    $request->validate([
-      'name_product' => 'required|exists:productions,nama_product',
-      'harga_jual' => 'required|numeric',
-      'stok' => 'required|numeric',
-      'gambar' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-    ]);
+    {
+        $request->validate([
+            'name_product' => 'required|exists:productions,nama_product',
+            'harga_jual' => 'required|numeric',
+            'stok' => 'required|numeric',
+            'gambar' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
 
-    // Dapatkan data produksi berdasarkan nama_product
-    $production = Production::where('nama_product', $request->name_product)->first();
+        // Dapatkan data produksi berdasarkan nama_product
+        $production = Production::where('nama_product', $request->name_product)->first();
 
+        // Simpan data produk
+        $product = new Product;
+        $product->gambar = $request->gambar;
+        $product->name_product = $request->name_product;
+        $product->harga_jual = $request->harga_jual;
+        $product->stok = $request->stok;
 
-    // Simpan data produk
-    $product = new Product;
-    $product->gambar = $request->gambar;
-    $product->name_product = $request->name_product;
-    $product->harga_jual = $request->harga_jual;
-    $product->stok = $request->stok;
+        // Set FK production_id berdasarkan ID dari data produksi
+        $product->production_id = $production->id;
 
-    // Set FK production_id berdasarkan ID dari data produksi
-    $product->production_id = $production->id;
+        $product->save();
 
-    $product->save();
-
-    if ($request->hasFile('gambar')) {
-      $imagePath = $request->file('gambar')->store('images', 'public');
-      $product->gambar = $imagePath;
-      $product->save();
-    }
+        if ($request->hasFile('gambar')) {
+            $imagePath = $request->file('gambar')->store('images', 'public');
+            $product->gambar = $imagePath;
+            $product->save();
+        }
 
     return redirect()->route('product');
   }
@@ -146,12 +144,12 @@ class ProductController extends Controller
     return redirect()->route('product')->with('success', 'Product updated successfully');
   }
 
-public function delete(Product $product)
-{
+  public function delete(Product $product)
+  {
     $product->delete();
 
     return response()->json(['success' => 'Product deleted successfully']);
-}
+  }
   public function destroy($id)
   {
     $product = Product::find($id);
@@ -184,13 +182,18 @@ public function delete(Product $product)
     return Excel::download(new ProductsExport, 'products.xlsx');
   }
   public function generatePDF()
-{
-    // Dispatch job ke dalam job queue
-    GenerateProductPdf::dispatch();
+  {
+    $products = Product::all();
+    foreach ($products as $product) {
+      $productionData = Production::find($product->production_id);
+      $product->kode_produksi = $productionData->kode_produksi;
+      $product->exp_date = $productionData->exp_date;
+    }
+    $pdfFileName = 'Data Produk';
+    $pdf = PDF::loadView('pdf.product-pdf', compact('products'));
 
-    // Memberikan respons kepada pengguna bahwa job telah dimulai
-    return response()->json(['message' => 'Export PDF job has been started.']);
-}
+    $pdfFileName .= '.pdf';
 
-
+    return $pdf->download($pdfFileName);;
+  }
 }

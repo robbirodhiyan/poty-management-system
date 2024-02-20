@@ -5,26 +5,20 @@
 @section('content')
     <h4 class="fw-bold py-3 mb-4">
         <span class="text-muted fw-light">Lainnya /</span> Sumber
-<ul class="list-inline mb-0 float-end">
-           <li class="list-inline-item">
-               <a href="#" class="btn btn-outline-primary">
-                   <i class="bi bi-download me-1"></i> Arsip
-               </a>
-           </li>
-           <li class="list-inline-item">|</li>
-           <li class="list-inline-item">
-               <a href="{{ route('InputSumber') }}" class="btn btn-primary">
-                   <i class="bi bi-plus-circle me-1"></i> Input Data
-               </a>
-           </li>
-       </ul>
+        <ul class="list-inline mb-0 float-end">
+            <li class="list-inline-item">
+                <a href="{{ route('InputSumber') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i> Input Data
+                </a>
+            </li>
+        </ul>
     </h4>
 
     <!-- Basic Bootstrap Table -->
-    <div class="card">
+    <div class="card p-4">
         {{-- <h5 class="card-header">Table Basic</h5> --}}
         <div class="table-responsive text-nowrap">
-            <table class="table">
+            <table class="table" id="datatables">
                 <thead>
                     <tr>
                         <th>No</th>
@@ -32,9 +26,9 @@
                     </tr>
                 </thead>
                 <tbody class="table-border-bottom-0">
-                    @foreach ($sources as $source)
+                    @foreach ($sources as $key => $source)
                         <tr>
-                            <td>{{ $source->id }}</td>
+                            <td>{{ $key + 1 }}</td>
                             <td>{{ $source->name }}</td>
 
                         </tr>
@@ -46,4 +40,13 @@
     </div>
     <!--/ Basic Bootstrap Table -->
 
+@endsection
+@section('page-script')
+    <script>
+        $(document).ready(function () {
+          responsive: true,
+            // Inisialisasi DataTables
+            $('#datatables').DataTable();
+        });
+    </script>
 @endsection

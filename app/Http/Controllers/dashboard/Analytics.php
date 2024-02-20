@@ -98,45 +98,35 @@ class Analytics extends Controller
         return redirect()->route('dashboard')->with('success', 'Note created successfully');
     }
 
-    // Metode untuk menampilkan formulir edit catatan
-    public function editNoteForm($id)
+     public function editNote($id)
     {
         $note = Note::findOrFail($id);
-        return view('content.dashboard.edit-note', ['note' => $note]);
+
+        // Logika untuk menampilkan halaman pengeditan catatan
+        return view('content.dashboard.edit-note', compact('note'));
     }
 
-    // Metode untuk menangani pembaruan catatan
     public function updateNote(Request $request, $id)
     {
-        // Validasi input
-        $request->validate([
-            'text' => 'required',
-            'date' => 'required|date',
-            // Sesuaikan validasi lainnya sesuai kebutuhan
-        ]);
-
-        // Temukan catatan berdasarkan ID
         $note = Note::findOrFail($id);
 
-        // Perbarui data catatan
+        // Logika untuk memperbarui catatan
         $note->update([
             'text' => $request->input('text'),
             'date' => $request->input('date'),
-            // Sesuaikan dengan kolom-kolom lainnya
+            // Tambahkan kolom-kolom lain yang perlu diperbarui
         ]);
 
-        // Redirect ke halaman utama dengan pesan sukses
-        return redirect()->route('dashboard.index')->with('success', 'Note updated successfully');
+        return redirect()->route('dashboard')->with('success', 'Catatan berhasil diperbarui');
     }
 
-    // Metode untuk menghapus catatan
     public function deleteNote($id)
-    {
-        // Temukan dan hapus catatan berdasarkan ID
-        $note = Note::findOrFail($id);
-        $note->delete();
+{
+    $note = Note::findOrFail($id);
+    $note->delete();
 
-        // Redirect ke halaman utama dengan pesan sukses
-        return redirect()->route('dashboard.index')->with('success', 'Note deleted successfully');
-    }
+    return redirect()->route('dashboard')
+                    ->with('success', 'Catatan berhasil dihapus')
+                    ->with('swal', 'true');
+}
 }

@@ -4,12 +4,21 @@
 
 @section('content')
     <h4 class="fw-bold py-3 mb-4">
-        <span class="text-muted fw-light">transaction /</span> Pemasukan
+        <span class="text-muted fw-light">Transaction /</span> Pemasukan
         <ul class="list-inline mb-0 float-end">
-            <li class="list-inline-item">
-                <a href="#" class="btn btn-outline-primary">
-                    <i class="bi bi-download me-1"></i> To Excel
-                </a>
+            <li class="dropdown d-inline-block ">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" id="exportDropdown"
+                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Export
+                </button>
+                <div class="dropdown-menu" aria-labelledby="exportDropdown">
+                    <a class="dropdown-item" href="{{ route('generate-pdf-debit', ['selectedMonth' => 'all']) }}">All Data</a>
+                    @foreach ($availableMonths as $month)
+                        <a class="dropdown-item" href="{{ route('generate-pdf-debit', ['selectedMonth' => $month]) }}">
+                            {{ \Carbon\Carbon::parse($month)->format('F Y') }}
+                        </a>
+                    @endforeach
+                </div>
             </li>
             <li class="list-inline-item">|</li>
             <li class="list-inline-item">
@@ -34,7 +43,6 @@
                         <th>kategori</th>
                         <th>Sumber</th>
                         <th>Nominal</th>
-
                         <th>Quantity</th>
                         <th>Log</th>
                         <th>Actions</th>
@@ -66,12 +74,20 @@
                                 @endif
                             </td>
                             <td>
-                                <button type="button" class="btn btn-primary" onclick="window.location='{{ route('editpemasukan', ['debit' => $debit->id]) }}'">
-        <i class="bx bx-edit-alt me-1"></i> Edit
-    </button>
-    <button type="button" class="btn btn-info riwayat" data-name="{{ $debit->name }}" value="{{ $debit->id }}">
-        <i class="bx bx-history me-1"></i> Lihat Riwayat
-    </button>
+                                @if (auth()->user()->hasRole('owner'))
+                                    <button type="button" class="btn btn-danger delete-production"
+                                    data-id="{{ $debit->id }}" data-name="{{ $debit->name }}">
+                                    <i class="bx bx-trash me-1"></i> Delete
+                                </button>
+                                @endif
+                                <button type="button" class="btn btn-primary"
+                                    onclick="window.location='{{ route('editpemasukan', ['debit' => $debit->id]) }}'">
+                                    <i class="bx bx-edit-alt me-1"></i> Edit
+                                </button>
+                                <button type="button" class="btn btn-info riwayat" data-name="{{ $debit->name }}"
+                                    value="{{ $debit->id }}">
+                                    <i class="bx bx-history me-1"></i> Lihat Riwayat
+                                </button>
                             </td>
                         </tr>
                     @endforeach
@@ -84,7 +100,7 @@
 
     <!-- Modal -->
     <div class="modal fade" id="debitLog" tabindex="-1" aria-labelledby="debitLogLabel" aria-hidden="true">
-      <div class="modal-dialog modal-xl">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
                     <h1 class="modal-title fs-5" id="debitLogLabel"></h1>
@@ -108,9 +124,8 @@
 
 @push('page-script')
     <script>
-
-      // datatable
-    $(document).ready(function() {
+        // datatable
+        $(document).ready(function() {
             $('#datatable').DataTable({
                 responsive: true,
                 order: [
@@ -126,21 +141,21 @@
 
         });
 
-         $(document).on('click', '.riwayat', function() {
-        var id = $(this).val();
-        var name = $(this).data('name');
+        $(document).on('click', '.riwayat', function() {
+            var id = $(this).val();
+            var name = $(this).data('name');
 
-        $.ajax({
-            url: "{{ url('/auth/debit-log') }}/" + id,
-            type: "GET",
-            data: {
-                id: id,
-            },
-            success: function(data) {
-                $('#debitLogLabel').html(name);
-                var html = '';
-                var i;
-                html += `
+            $.ajax({
+                url: "{{ url('/auth/debit-log') }}/" + id,
+                type: "GET",
+                data: {
+                    id: id,
+                },
+                success: function(data) {
+                    $('#debitLogLabel').html(name);
+                    var html = '';
+                    var i;
+                    html += `
                     <div class="table-responsive">
                         <table class="table table-bordered">
                             <thead>
@@ -156,8 +171,8 @@
                             <tbody>
                 `;
 
-                for (i = 0; i < data.length; i++) {
-                    html += `
+                    for (i = 0; i < data.length; i++) {
+                        html += `
                         <tr>
                             <th scope="row">${data[i].created_at}</th>
                             <td>${data[i].name}</td>
@@ -166,20 +181,69 @@
                             <td>${data[i].total}</td>
                     `;
 
-                    if (data[i].status_update == 0) {
-                        html += `<td><span class="badge bg-label-success me-1">Original</span></td>`;
-                    } else {
-                        html += `<td><span class="badge bg-label-success me-1">Diperbarui</span></td>`;
+                        if (data[i].status_update == 0) {
+                            html +=
+                                `<td><span class="badge bg-label-success me-1">Original</span></td>`;
+                        } else {
+                            html +=
+                                `<td><span class="badge bg-label-success me-1">Diperbarui</span></td>`;
+                        }
+                        html += `</tr>`;
                     }
-                    html += `</tr>`;
-                }
 
-                html += `</tbody></table></div>`;
-                $('.modal-body').html(html);
-                $('#debitLog').modal('show');
-            }
+                    html += `</tbody></table></div>`;
+                    $('.modal-body').html(html);
+                    $('#debitLog').modal('show');
+                }
+            });
         });
-    });
-        // });
+
+        $(document).on('click', '.delete-production', function() {
+            var productId = $(this).data('id');
+            var productName = $(this).data('name');
+
+            Swal.fire({
+                title: 'Apakah Anda yakin?',
+                text: 'Data ' + productName + ' akan dihapus!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Jika pengguna mengkonfirmasi, kirimkan permintaan DELETE ke rute deleteproduct
+                    $.ajax({
+                        type: "DELETE",
+                        url: "{{ url('/deletepemasukan') }}" + '/' + productId,
+                        data: {
+                            "_token": "{{ csrf_token() }}"
+                        },
+                        success: function(data) {
+                            // Tampilkan Sweet Alert sukses
+                            Swal.fire(
+                                'Berhasil!',
+                                'Data ' + productName + ' telah dihapus.',
+                                'success'
+                            ).then((result) => {
+                                // Muat ulang halaman setelah menghapus
+                                location.reload();
+                            });
+                        },
+                        error: function(data) {
+                            // Tampilkan Sweet Alert gagal
+                            Swal.fire(
+                                'Gagal!',
+                                'Terjadi kesalahan saat menghapus Data.',
+                                'error'
+                            );
+                        }
+                    });
+                }
+            });
+        });
+
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 @endpush

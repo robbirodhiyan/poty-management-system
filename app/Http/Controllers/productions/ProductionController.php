@@ -21,11 +21,10 @@ class ProductionController extends Controller
   {
     $productions = Production::all();
     $availableMonths = Production::distinct()
-    ->selectRaw('MONTH(mulai_produksi) as month')
-    ->pluck('month')
-    ->filter() // Filter nilai yang tidak valid
-    ->map(function ($month) {
-        return \Carbon\Carbon::create(null, $month, 1)->format('Y-m');
+    ->selectRaw('YEAR(mulai_produksi) as year, MONTH(mulai_produksi) as month')
+    ->pluck('year', 'month')
+    ->map(function ($year, $month) {
+        return \Carbon\Carbon::create($year, $month, 1)->format('Y-m');
     });
 
 return view('content.production.production', [
@@ -167,17 +166,18 @@ private function updateProductStock($productName, $productionQuantity)
   public function generatePDF(Request $request)
     {
        $selectedMonth = $request->query('selectedMonth');
-       $pdfFileName = 'production_report';
+       $pdfFileName = 'Laporan Produksi';
 
     if ($selectedMonth && $selectedMonth !== 'all') {
         // Menggunakan where untuk membandingkan tanggal secara langsung
         $productions = Production::where('mulai_produksi', 'like', $selectedMonth . '%')->get();
-        $pdfFileName .= '_' . \Carbon\Carbon::parse($selectedMonth)->format('Y-m');
+        $pdfFileName .= '_' . \Carbon\Carbon::parse($selectedMonth)->format(' F Y');
     } else {
         $productions = Production::all();
     }
+    $selectedMonth = $request->query('selectedMonth');
 
-    $pdf = PDF::loadView('pdf.productions-pdf', compact('productions'));
+    $pdf = PDF::loadView('pdf.productions-pdf', compact('productions','selectedMonth'));
 
     $pdfFileName .= '.pdf';
 
